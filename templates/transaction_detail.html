@@ -33,7 +33,11 @@ async function loadDetail() {
     const statusBadge = t.successful
       ? '<span class="badge badge-success">Success</span>'
       : '<span class="badge badge-failed">Failed</span>';
+    const sourceBadge = t._source === "public"
+      ? '<span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;">Archived (public)</span>'
+      : '<span class="badge badge-success">Ðarlingtøn🦅 node</span>';
     detailBox.innerHTML = `
+      <div class="detail-row"><span class="detail-label">Source</span><span class="detail-value">${sourceBadge}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">${statusBadge}</span></div>
       <div class="detail-row"><span class="detail-label">Ledger</span><span class="detail-value"><a href="/blocks/${t.ledger}" class="accent">#${t.ledger}</a></span></div>
       <div class="detail-row"><span class="detail-label">Source Account</span><span class="detail-value mono-trunc"><a href="/account/${t.source_account}" class="accent">${t.source_account}</a></span></div>

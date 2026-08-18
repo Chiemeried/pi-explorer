@@ -30,7 +30,11 @@ async function loadDetail() {
   try {
     const data = await apiGet(`/api/ledgers/{{ sequence }}`);
     const l = data.ledger;
+    const sourceBadge = l._source === "public"
+      ? '<span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;">Archived (public)</span>'
+      : '<span class="badge badge-success">Ðarlingtøn🦅 node</span>';
     detailBox.innerHTML = `
+      <div class="detail-row"><span class="detail-label">Source</span><span class="detail-value">${sourceBadge}</span></div>
       <div class="detail-row"><span class="detail-label">Hash</span><span class="detail-value mono-trunc">${l.hash}</span></div>
       <div class="detail-row"><span class="detail-label">Previous Hash</span><span class="detail-value mono-trunc">${l.prev_hash}</span></div>
       <div class="detail-row"><span class="detail-label">Sequence</span><span class="detail-value">#${l.sequence}</span></div>

@@ -33,7 +33,11 @@ async function loadAccount() {
       const type = b.asset_type === "native" ? "PI" : (b.asset_code || b.asset_type);
       return `<div class="detail-row"><span class="detail-label">${type}</span><span class="detail-value">${formatPi(b.balance)}</span></div>`;
     }).join("");
+    const sourceBadge = a._source === "public"
+      ? '<span class="badge" style="background:rgba(251,191,36,0.15);color:#fbbf24;">Archived (public)</span>'
+      : '<span class="badge badge-success">Ðarlingtøn🦅 node</span>';
     detailBox.innerHTML = `
+      <div class="detail-row"><span class="detail-label">Source</span><span class="detail-value">${sourceBadge}</span></div>
       <div class="detail-row"><span class="detail-label">Sequence</span><span class="detail-value">${a.sequence}</span></div>
       <div class="detail-row"><span class="detail-label">Subentries</span><span class="detail-value">${a.subentry_count}</span></div>
       ${balances}
