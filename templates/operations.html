@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Operations — Ðarlingtøn🦅{% endblock %}
+{% block nav_operations %}active{% endblock %}
+
+{% block content %}
+<div class="page-title">Operations</div>
+<div class="page-subtitle">Individual operations across recent transactions</div>
+
+<div class="panel">
+  <div class="panel-header"><span><span class="live-dot"></span>Live Feed</span></div>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Type</th><th>Account</th><th>Transaction</th><th>When</th></tr></thead>
+    <tbody id="op-body"><tr><td colspan="4" class="loading-state">Loading…</td></tr></tbody>
+  </table></div>
+</div>
+<div class="pagination">
+  <button id="prev-btn" disabled>← Newer</button>
+  <button id="next-btn">Older →</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cursor = null;
+let cursorStack = [];
+
+async function loadOps(useCursor) {
+  const body = document.getElementById("op-body");
+  body.innerHTML = '<tr><td colspan="4" class="loading-state">Loading…</td></tr>';
+  try {
+    const url = useCursor ? `/api/operations?limit=20&cursor=${useCursor}` : "/api/operations?limit=20";
+    const data = await apiGet(url);
+    const records = data.records;
+    if (!records.length) {
+      body.innerHTML = '<tr><td colspan="4" class="empty-state">No more operations</td></tr>';
+      return;
+    }
+    body.innerHTML = "";
+    for (const o of records) {
+      const tr = el("tr", "row-link");
+      tr.onclick = () => window.location.href = `/transactions/${o.transaction_hash}`;
+      tr.innerHTML = `
+        <td><span class="badge badge-op">${o.type}</span></td>
+        <td class="mono-trunc">${truncateMiddle(o.source_account || "—")}</td>
+        <td class="mono-trunc">${truncateMiddle(o.transaction_hash)}</td>
+        <td class="text-dim">${timeAgo(o.created_at)}</td>
+      `;
+      body.appendChild(tr);
+    }
+    cursor = records[records.length - 1].paging_token;
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="4" class="error-state">${e.message}</td></tr>`;
+  }
+}
+
+document.getElementById("next-btn").onclick = () => {
+  cursorStack.push(cursor);
+  document.getElementById("prev-btn").disabled = false;
+  loadOps(cursor);
+};
+document.getElementById("prev-btn").onclick = () => {
+  cursorStack.pop();
+  const prev = cursorStack[cursorStack.length - 1];
+  if (!prev) document.getElementById("prev-btn").disabled = true;
+  loadOps(prev);
+};
+
+loadOps();
+</script>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Transactions — Ðarlingtøn🦅{% endblock %}
+{% block nav_transactions %}active{% endblock %}
+
+{% block content %}
+<div class="page-title">Transactions</div>
+<div class="page-subtitle">Most recent transactions on Pi Network Mainnet</div>
+
+<div class="panel">
+  <div class="panel-header"><span><span class="live-dot"></span>Live Feed</span></div>
+  <div class="table-scroll"><table>
+    <thead><tr><th>Hash</th><th>Source Account</th><th>Ops</th><th>Status</th><th>When</th></tr></thead>
+    <tbody id="tx-body"><tr><td colspan="5" class="loading-state">Loading…</td></tr></tbody>
+  </table></div>
+</div>
+<div class="pagination">
+  <button id="prev-btn" disabled>← Newer</button>
+  <button id="next-btn">Older →</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cursor = null;
+let cursorStack = [];
+
+async function loadTx(useCursor) {
+  const body = document.getElementById("tx-body");
+  body.innerHTML = '<tr><td colspan="5" class="loading-state">Loading…</td></tr>';
+  try {
+    const url = useCursor ? `/api/transactions?limit=20&cursor=${useCursor}` : "/api/transactions?limit=20";
+    const data = await apiGet(url);
+    const records = data.records;
+    if (!records.length) {
+      body.innerHTML = '<tr><td colspan="5" class="empty-state">No more transactions</td></tr>';
+      return;
+    }
+    body.innerHTML = "";
+    for (const t of records) {
+      const tr = el("tr", "row-link");
+      tr.onclick = () => window.location.href = `/transactions/${t.hash}`;
+      const statusBadge = t.successful
+        ? '<span class="badge badge-success">Success</span>'
+        : '<span class="badge badge-failed">Failed</span>';
+      tr.innerHTML = `
+        <td class="mono-trunc">${truncateMiddle(t.hash)}</td>
+        <td class="mono-trunc">${truncateMiddle(t.source_account)}</td>
+        <td>${t.operation_count}</td>
+        <td>${statusBadge}</td>
+        <td class="text-dim">${timeAgo(t.created_at)}</td>
+      `;
+      body.appendChild(tr);
+    }
+    cursor = records[records.length - 1].paging_token;
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="5" class="error-state">${e.message}</td></tr>`;
+  }
+}
+
+document.getElementById("next-btn").onclick = () => {
+  cursorStack.push(cursor);
+  document.getElementById("prev-btn").disabled = false;
+  loadTx(cursor);
+};
+document.getElementById("prev-btn").onclick = () => {
+  cursorStack.pop();
+  const prev = cursorStack[cursorStack.length - 1];
+  if (!prev) document.getElementById("prev-btn").disabled = true;
+  loadTx(prev);
+};
+
+loadTx();
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Payments — Ðarlingtøn🦅{% endblock %}
+{% block nav_payments %}active{% endblock %}
+
+{% block content %}
+<div class="page-title">Payments</div>
+<div class="page-subtitle">Pi transfers between accounts</div>
+
+<div class="panel">
+  <div class="panel-header"><span><span class="live-dot"></span>Live Feed</span></div>
+  <div class="table-scroll"><table>
+    <thead><tr><th>From</th><th>To</th><th>Amount</th><th>When</th></tr></thead>
+    <tbody id="pay-body"><tr><td colspan="4" class="loading-state">Loading…</td></tr></tbody>
+  </table></div>
+</div>
+<div class="pagination">
+  <button id="prev-btn" disabled>← Newer</button>
+  <button id="next-btn">Older →</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cursor = null;
+let cursorStack = [];
+
+async function loadPayments(useCursor) {
+  const body = document.getElementById("pay-body");
+  body.innerHTML = '<tr><td colspan="4" class="loading-state">Loading…</td></tr>';
+  try {
+    const url = useCursor ? `/api/payments?limit=20&cursor=${useCursor}` : "/api/payments?limit=20";
+    const data = await apiGet(url);
+    const records = data.records.filter(r => r.type === "payment" || r.type === "create_account");
+    if (!records.length) {
+      body.innerHTML = '<tr><td colspan="4" class="empty-state">No more payments</td></tr>';
+      return;
+    }
+    body.innerHTML = "";
+    for (const p of records) {
+      const tr = el("tr", "row-link");
+      tr.onclick = () => window.location.href = `/transactions/${p.transaction_hash}`;
+      const from = p.from || p.funder || "—";
+      const to = p.to || p.account || "—";
+      const amount = p.amount ? formatPi(p.amount) : (p.starting_balance ? formatPi(p.starting_balance) : "—");
+      tr.innerHTML = `
+        <td class="mono-trunc">${truncateMiddle(from)}</td>
+        <td class="mono-trunc">${truncateMiddle(to)}</td>
+        <td>${amount}</td>
+        <td class="text-dim">${timeAgo(p.created_at)}</td>
+      `;
+      body.appendChild(tr);
+    }
+    cursor = data.records[data.records.length - 1].paging_token;
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="4" class="error-state">${e.message}</td></tr>`;
+  }
+}
+
+document.getElementById("next-btn").onclick = () => {
+  cursorStack.push(cursor);
+  document.getElementById("prev-btn").disabled = false;
+  loadPayments(cursor);
+};
+document.getElementById("prev-btn").onclick = () => {
+  cursorStack.pop();
+  const prev = cursorStack[cursorStack.length - 1];
+  if (!prev) document.getElementById("prev-btn").disabled = true;
+  loadPayments(prev);
+};
+
+loadPayments();
+</script>
+{% endblock %}

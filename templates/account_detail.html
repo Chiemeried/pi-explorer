@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Account — Ðarlingtøn🦅{% endblock %}
+
+{% block content %}
+<div class="page-title">Account</div>
+<div class="page-subtitle mono-trunc" style="word-break:break-all;">{{ account_id }}</div>
+
+<div class="panel">
+  <div class="panel-header">Balances</div>
+  <div class="detail-grid" id="account-detail">
+    <div class="loading-state">Loading…</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">Recent Payments</div>
+  <div class="table-scroll"><table>
+    <thead><tr><th>From</th><th>To</th><th>Amount</th><th>When</th></tr></thead>
+    <tbody id="pay-body"><tr><td colspan="4" class="loading-state">Loading…</td></tr></tbody>
+  </table></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadAccount() {
+  const detailBox = document.getElementById("account-detail");
+  const payBody = document.getElementById("pay-body");
+  try {
+    const data = await apiGet(`/api/accounts/${encodeURIComponent("{{ account_id }}")}`);
+    const a = data.account;
+    const balances = (a.balances || []).map(b => {
+      const type = b.asset_type === "native" ? "PI" : (b.asset_code || b.asset_type);
+      return `<div class="detail-row"><span class="detail-label">${type}</span><span class="detail-value">${formatPi(b.balance)}</span></div>`;
+    }).join("");
+    detailBox.innerHTML = `
+      <div class="detail-row"><span class="detail-label">Sequence</span><span class="detail-value">${a.sequence}</span></div>
+      <div class="detail-row"><span class="detail-label">Subentries</span><span class="detail-value">${a.subentry_count}</span></div>
+      ${balances}
+    `;
+
+    const payments = (data.payments || []).filter(p => p.type === "payment" || p.type === "create_account");
+    if (!payments.length) {
+      payBody.innerHTML = '<tr><td colspan="4" class="empty-state">No recent payments</td></tr>';
+      return;
+    }
+    payBody.innerHTML = "";
+    for (const p of payments) {
+      const tr = el("tr", "row-link");
+      tr.onclick = () => window.location.href = `/transactions/${p.transaction_hash}`;
+      const from = p.from || p.funder || "—";
+      const to = p.to || p.account || "—";
+      const amount = p.amount ? formatPi(p.amount) : (p.starting_balance ? formatPi(p.starting_balance) : "—");
+      tr.innerHTML = `
+        <td class="mono-trunc">${truncateMiddle(from)}</td>
+        <td class="mono-trunc">${truncateMiddle(to)}</td>
+        <td>${amount}</td>
+        <td class="text-dim">${timeAgo(p.created_at)}</td>
+      `;
+      payBody.appendChild(tr);
+    }
+  } catch (e) {
+    detailBox.innerHTML = `<div class="error-state">${e.message}</div>`;
+    payBody.innerHTML = "";
+  }
+}
+loadAccount();
+</script>
+{% endblock %}

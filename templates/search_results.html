@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Search — Ðarlingtøn🦅{% endblock %}
+
+{% block content %}
+<div class="page-title">Search</div>
+<div class="page-subtitle">Results for "{{ query }}"</div>
+
+<div class="panel">
+  <div class="empty-state">
+    {% if query %}
+      No matching transaction, ledger, or account found for "{{ query }}".<br>
+      Try a 64-character transaction hash, a ledger number, or a Pi address starting with G.
+    {% else %}
+      Enter a transaction hash, ledger number, or account address to search.
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

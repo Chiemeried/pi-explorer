@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Ðarlingtøn🦅 — Pi Network{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+<div class="page-title">Pi Network Mainnet</div>
+<div class="page-subtitle">Live ledger and transaction feed from a private Horizon node</div>
+
+<div class="stats-row" id="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">Latest Ledger</div>
+    <div class="stat-value" id="stat-ledger">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Recent Tx (last page)</div>
+    <div class="stat-value" id="stat-tx-count">—</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Network</div>
+    <div class="stat-value">MAINNET</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Node</div>
+    <div class="stat-value" style="font-size:13px;">Private · Ðarlingtøn🦅</div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <span><span class="live-dot"></span>Recent Ledgers</span>
+    <a href="/blocks" class="text-dim" style="font-size:12px;">View all →</a>
+  </div>
+  <div class="table-scroll"><table>
+    <thead>
+      <tr><th>Sequence</th><th>Hash</th><th>Transactions</th><th>Closed</th></tr>
+    </thead>
+    <tbody id="ledgers-body">
+      <tr><td colspan="4" class="loading-state">Loading ledgers…</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <span><span class="live-dot"></span>Recent Transactions</span>
+    <a href="/transactions" class="text-dim" style="font-size:12px;">View all →</a>
+  </div>
+  <div class="table-scroll"><table>
+    <thead>
+      <tr><th>Hash</th><th>Source Account</th><th>Ops</th><th>Status</th><th>When</th></tr>
+    </thead>
+    <tbody id="tx-body">
+      <tr><td colspan="5" class="loading-state">Loading transactions…</td></tr>
+    </tbody>
+  </table></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function loadLedgers() {
+  const body = document.getElementById("ledgers-body");
+  try {
+    const data = await apiGet("/api/ledgers?limit=10");
+    const records = data.records;
+    if (!records.length) {
+      body.innerHTML = '<tr><td colspan="4" class="empty-state">No ledgers found</td></tr>';
+      return;
+    }
+    document.getElementById("stat-ledger").textContent = records[0].sequence;
+    body.innerHTML = "";
+    for (const l of records) {
+      const tr = el("tr", "row-link");
+      tr.onclick = () => window.location.href = `/blocks/${l.sequence}`;
+      tr.innerHTML = `
+        <td class="mono-trunc">#${l.sequence}</td>
+        <td class="mono-trunc">${truncateMiddle(l.hash)}</td>
+        <td>${l.successful_transaction_count ?? l.transaction_count ?? 0}</td>
+        <td class="text-dim">${timeAgo(l.closed_at)}</td>
+      `;
+      body.appendChild(tr);
+    }
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="4" class="error-state">${e.message}</td></tr>`;
+  }
+}
+
+async function loadTransactions() {
+  const body = document.getElementById("tx-body");
+  try {
+    const data = await apiGet("/api/transactions?limit=10");
+    const records = data.records;
+    document.getElementById("stat-tx-count").textContent = records.length;
+    if (!records.length) {
+      body.innerHTML = '<tr><td colspan="5" class="empty-state">No transactions found</td></tr>';
+      return;
+    }
+    body.innerHTML = "";
+    for (const t of records) {
+      const tr = el("tr", "row-link");
+      tr.onclick = () => window.location.href = `/transactions/${t.hash}`;
+      const statusBadge = t.successful
+        ? '<span class="badge badge-success">Success</span>'
+        : '<span class="badge badge-failed">Failed</span>';
+      tr.innerHTML = `
+        <td class="mono-trunc">${truncateMiddle(t.hash)}</td>
+        <td class="mono-trunc">${truncateMiddle(t.source_account)}</td>
+        <td>${t.operation_count}</td>
+        <td>${statusBadge}</td>
+        <td class="text-dim">${timeAgo(t.created_at)}</td>
+      `;
+      body.appendChild(tr);
+    }
+  } catch (e) {
+    body.innerHTML = `<tr><td colspan="5" class="error-state">${e.message}</td></tr>`;
+  }
+}
+
+loadLedgers();
+loadTransactions();
+setInterval(loadLedgers, 15000);
+setInterval(loadTransactions, 15000);
+</script>
+{% endblock %}

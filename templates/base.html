@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Ðarlingtøn🦅 — Pi Network{% endblock %}</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <div class="bg-grid"></div>
+
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand-glyph">π</span>
+      <span class="brand-text">Ðarlingtøn<span class="accent">🦅</span></span>
+    </a>
+
+    <form class="search-form" action="/search" method="get">
+      <input type="text" name="q" placeholder="Search by Tx Hash / Account / Ledger" value="{{ request.args.get('q', '') }}" autocomplete="off">
+      <button type="submit">Search</button>
+    </form>
+
+    <div class="network-switch">
+      {% for net in networks %}
+        {% if net in active_networks %}
+          <a href="#" class="net-pill {% if net == current_network %}net-active{% endif %}">{{ net }}</a>
+        {% else %}
+          <span class="net-pill net-disabled" title="Coming soon">{{ net }}</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <a href="/" class="tab {% block nav_home %}{% endblock %}">Overview</a>
+    <a href="/operations" class="tab {% block nav_operations %}{% endblock %}">Operations</a>
+    <a href="/payments" class="tab {% block nav_payments %}{% endblock %}">Payments</a>
+    <a href="/transactions" class="tab {% block nav_transactions %}{% endblock %}">Transactions</a>
+    <a href="/blocks" class="tab {% block nav_blocks %}{% endblock %}">Blocks</a>
+    <a href="/nodes" class="tab {% block nav_nodes %}{% endblock %}">Nodes</a>
+  </nav>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <span>Ðarlingtøn🦅 · Powered by a private Pi Network Horizon node</span>
+  </footer>
+
+  <script src="/static/js/main.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
