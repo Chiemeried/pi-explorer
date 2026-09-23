@@ -1,21 +1,41 @@
-# Ðarlingtøn🦅
+# pi-explorer
 
-Pi Network block explorer. Flask backend, queries a private Horizon node.
+> Ðarlingtøn🦅 Pi Network Tooling
 
-## Run locally
-```
-pip install -r requirements.txt --break-system-packages
-python3 app.py
-```
-Serves on port 3060.
+## Description
+Flask-based Pi Network blockchain explorer with 6 tabs, private node IP masking, and 410/404 fallback handling.
 
-## Deploy (VPS, PM2)
+## Port
+`3060`
+
+## Environment Variables
+Create a `.env` file in the root of this project:
 ```
-git clone <repo> pi-explorer
+HORIZON_URL=\nPRIVATE_NODE_URL=
+```
+
+## Install
+```bash
+npm install
+```
+
+## Run
+```bash
+# Start with PM2
+pm2 start server.py --name pi-explorer --interpreter python3
+
+# Or directly
+node server.js
+```
+
+## Deploy (from scratch on a new VPS)
+```bash
+git clone https://github.com/Chiemeried/pi-explorer.git
 cd pi-explorer
-pip install -r requirements.txt --break-system-packages
-pm2 start app.py --name pi-explorer --interpreter python3
-pm2 save
+npm install
+cp .env.example .env   # fill in your values
+pm2 start server.py --name pi-explorer --interpreter python3
 ```
 
-Node endpoint is set in `horizon.py` (`HORIZON_BASE`).
+---
+*Private repo — Ðarlingtøn🦅 Darlington Logs*
