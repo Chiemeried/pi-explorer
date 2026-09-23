@@ -35,7 +35,7 @@ def _get(path, params=None, allow_fallback=True):
         return _get_from(HORIZON_BASE, path, params), "private"
     except requests.exceptions.HTTPError as e:
         status = e.response.status_code if e.response is not None else None
-        if allow_fallback and status == 404:
+        if allow_fallback and status in (404, 410):
             try:
                 return _get_from(PUBLIC_HORIZON_BASE, path, params), "public"
             except requests.exceptions.RequestException as e2:
